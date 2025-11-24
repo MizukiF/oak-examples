@@ -1,4 +1,4 @@
 depthai==3.0.0rc2
-git+https://github.com/luxonis/depthai-nodes.git@feat/stage-2-node
+git+https://github.com/luxonis/depthai-nodes.git@b24d6d75d78acf6d3bbad0c95e1072701de776a1
 opencv-python-headless==4.10.0.84
 numpy>=1.22
