@@ -1,2 +1,4 @@
-depthai==3.0.0
-depthai-nodes==0.3.4
+--extra-index-url https://artifacts.luxonis.com/artifactory/luxonis-python-release-local/
+--pre
+depthai==3.2.0rc0.
+depthai-nodes==0.3.6
