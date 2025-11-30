@@ -59,8 +59,8 @@ with dai.Pipeline(device) as pipeline:
     det_process_filter.setLabels(list(LABEL_ENCODING.keys()), keep=True)
 
     # visualization
-    visualizer.addTopic("Video", det_nn.passthrough, "images")
-    visualizer.addTopic("Detections", det_process_filter.out, "detections")
+    visualizer.addTopic("Video", det_nn.passthrough, "main")
+    visualizer.addTopic("Detections", det_process_filter.out, "main")
 
     print("Pipeline created.")
 
