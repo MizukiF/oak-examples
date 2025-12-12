@@ -1,6 +1,5 @@
 from dotenv import load_dotenv
 import os  # noqa: F401
-import time
 
 # os.environ.setdefault("DEPTHAI_LEVEL", "INFO")
 # os.environ.setdefault("DEPTHAI_NODES_LEVEL", "INFO")
@@ -67,8 +66,7 @@ with dai.Pipeline(device) as pipeline:
     pipeline.start()
 
     while pipeline.isRunning():
-        pipeline.processTasks()
-        time.sleep(0.01)
-        if 1 == ord("q"):
+        key = visualizer.waitKey(1)
+        if key == ord("q"):
             print("Received q. Exiting...")
             break
