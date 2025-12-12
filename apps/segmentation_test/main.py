@@ -1,21 +1,21 @@
 from dotenv import load_dotenv
-import os
+import os  # noqa: F401
 import time
 
-os.environ.setdefault("DEPTHAI_LEVEL", "INFO")
+# os.environ.setdefault("DEPTHAI_LEVEL", "INFO")
+# os.environ.setdefault("DEPTHAI_NODES_LEVEL", "INFO")
 import depthai as dai
 
 from depthai_nodes.node import ParsingNeuralNetwork
 from utils.arguments import initialize_argparser
 
-from utils.dummy import DummyNode
+from utils.dummy import DummyNode, DummyForwardNode  # noqa: F401
 
 
 load_dotenv(override=True)
 _, args = initialize_argparser()
 
-
-device = dai.Device()
+device = dai.Device(dai.DeviceInfo(args.device)) if args.device else dai.Device()
 platform = device.getPlatformAsString()
 print(f"Platform: {platform}")
 
@@ -27,7 +27,7 @@ with dai.Pipeline(device) as pipeline:
     video_full = cam.requestOutput(
         size=(512, 288),
         type=dai.ImgFrame.Type.BGR888i,
-        fps=40,
+        fps=30,
     )
 
     model = dai.NNModelDescription("luxonis/fastsam-s:512x288")
@@ -35,12 +35,32 @@ with dai.Pipeline(device) as pipeline:
     archive = dai.NNArchive(dai.getModelFromZoo(model))
     w, h = archive.getInputSize()
 
-    nn_node = pipeline.create(ParsingNeuralNetwork).build(
+    nn_with_parser_node = pipeline.create(ParsingNeuralNetwork).build(
         video_full,
         archive,
-    )
+    )  # ~19 FPS
 
-    outlines_node = pipeline.create(DummyNode).build(nn_node.out)
+    # nn_node = pipeline.create(dai.node.NeuralNetwork).build(
+    #     video_full,
+    #     archive,
+    # )  # by itself bottlenecked by input frame rate, raw benchmark 490 FPS
+
+    # dummy_forward_node = pipeline.create(DummyForwardNode).build(
+    #     nn_node.out
+    # )  # ~19FPS because there is device -> host transfer of NN output
+
+    # dummy_forward_node = pipeline.create(
+    #     DummyForwardNode
+    # ).build(
+    #     nn_with_parser_node.out
+    # )  # ~19FPS - No additional transfer so FPS is "same" as with just ParsingNeuralNetwork
+
+    benchmarkIn = pipeline.create(dai.node.BenchmarkIn)
+    benchmarkIn.logReportsAsWarnings(True)
+    benchmarkIn.sendReportEveryNMessages(10)
+    # nn_node.out.link(benchmarkIn.input)
+    # dummy_forward_node.out.link(benchmarkIn.input)
+    nn_with_parser_node.out.link(benchmarkIn.input)
 
     print("Pipeline created.")
 
