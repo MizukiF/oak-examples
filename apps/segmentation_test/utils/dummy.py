@@ -16,21 +16,12 @@ class DummyNode(BaseHostNode):
         self._last_ts = time.perf_counter()
         self._print_every = print_every_sec
 
-    def build(self, seg):
-        self.link_args(seg)
+    def build(self, seg, vid):
+        self.link_args(seg, vid)
         return self
 
-    def process(self, seg_msg):
-        self._frame_count += 1
-        now = time.perf_counter()
-        elapsed = now - self._last_ts
-
-        if elapsed >= self._print_every:
-            fps = self._frame_count / elapsed
-            print(f"NN FPS: {fps:.2f}")
-
-            self._frame_count = 0
-            self._last_ts = now
+    def process(self, seg_msg, vid):
+        self.out.send(seg_msg)
 
 
 class DummyForwardNode(dai.node.HostNode):

@@ -1,5 +1,6 @@
 from dotenv import load_dotenv
 import os  # noqa: F401
+import time
 
 # os.environ.setdefault("DEPTHAI_LEVEL", "INFO")
 # os.environ.setdefault("DEPTHAI_NODES_LEVEL", "INFO")
@@ -44,9 +45,10 @@ with dai.Pipeline(device) as pipeline:
     #     archive,
     # )  # by itself bottlenecked by input frame rate, raw benchmark 490 FPS
 
-    # dummy_forward_node = pipeline.create(DummyForwardNode).build(
-    #     nn_node.out
-    # )  # ~19FPS because there is device -> host transfer of NN output
+    dummy_node = pipeline.create(DummyNode).build(
+        nn_with_parser_node.out,
+        video_full,
+    )  # ~19FPS because there is device -> host transfer of NN output
 
     # dummy_forward_node = pipeline.create(
     #     DummyForwardNode
@@ -59,14 +61,11 @@ with dai.Pipeline(device) as pipeline:
     benchmarkIn.sendReportEveryNMessages(10)
     # nn_node.out.link(benchmarkIn.input)
     # dummy_forward_node.out.link(benchmarkIn.input)
-    nn_with_parser_node.out.link(benchmarkIn.input)
+    dummy_node.out.link(benchmarkIn.input)
 
     print("Pipeline created.")
 
     pipeline.start()
 
     while pipeline.isRunning():
-        key = visualizer.waitKey(1)
-        if key == ord("q"):
-            print("Received q. Exiting...")
-            break
+        time.sleep(0.001)
