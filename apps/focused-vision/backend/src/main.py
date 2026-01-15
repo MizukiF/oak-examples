@@ -50,10 +50,9 @@ with dai.Pipeline(device) as pipeline:
     # Naive face detection
     face_detection_naive = pipeline.create(ExtendedNeuralNetwork)
     face_detection_naive.build(
-        input=rgb_low_res_out,
+        image_input=rgb_low_res_out,
         input_resize_mode=dai.ImageManipConfig.ResizeMode.LETTERBOX,
         nn_source=FACE_DETECTION_MODEL,
-        enable_detection_filtering=True,
     )
     largest_face_detection_naive = host_nodes.PickLargestBbox().build(
         face_detection_naive.out
@@ -86,10 +85,9 @@ with dai.Pipeline(device) as pipeline:
     # 2-stage face detection
     people_detection = pipeline.create(ExtendedNeuralNetwork)
     people_detection.build(
-        input=rgb_low_res_out,
+        image_input=rgb_low_res_out,
         input_resize_mode=dai.ImageManipConfig.ResizeMode.LETTERBOX,
         nn_source=PEOPLE_DETECTION_MODEL,
-        enable_detection_filtering=True,
     )
     largest_people_detection = host_nodes.PickLargestBbox().build(people_detection.out)
     largest_people_detection_as_img_detection = (
@@ -139,16 +137,16 @@ with dai.Pipeline(device) as pipeline:
 
     # 1 stage with tiling
     face_detection_with_tiling_nn = pipeline.create(ExtendedNeuralNetwork)
-    face_detection_with_tiling_nn.build(
-        input=rgb_high_res_out,
+    face_detection_with_tiling_nn.with_tiling(
+        input_size=(HIGH_RES_WIDTH, HIGH_RES_HEIGHT),
+        grid_size=(4, 4),
+    ).with_detections_filter(
+        confidence_threshold=0.75,
+    ).build(
+        image_input=rgb_high_res_out,
         input_resize_mode=dai.ImageManipConfig.ResizeMode.LETTERBOX,
         nn_source=FACE_DETECTION_MODEL,
-        enable_detection_filtering=True,
-        enable_tiling=True,
-        input_size=(HIGH_RES_WIDTH, HIGH_RES_HEIGHT),
     )
-    face_detection_with_tiling_nn.setConfidenceThreshold(0.75)
-    face_detection_with_tiling_nn.setTilingGridSize((4, 4))
     largest_face_detection_tiling = host_nodes.PickLargestBbox().build(
         face_detection_with_tiling_nn.out
     )
