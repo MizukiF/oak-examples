@@ -89,15 +89,16 @@ with dai.Pipeline(device) as pipeline:
     left_cam = pipeline.create(dai.node.Camera).build(dai.CameraBoardSocket.CAM_B)
     right_cam = pipeline.create(dai.node.Camera).build(dai.CameraBoardSocket.CAM_C)
     
-    # Request outputs from stereo cameras
+    # Request outputs from stereo cameras (lower resolution to save resources)
     left_out = left_cam.requestOutput((640, 400), dai.ImgFrame.Type.GRAY8, fps=args.fps_limit)
     right_out = right_cam.requestOutput((640, 400), dai.ImgFrame.Type.GRAY8, fps=args.fps_limit)
     
-    # Create stereo depth node
-    stereo = pipeline.create(dai.node.StereoDepth).build(
-        left=left_out,
-        right=right_out,
-    )
+    # Create stereo depth node with minimal resource usage
+    stereo = pipeline.create(dai.node.StereoDepth)
+    stereo.setDepthAlign(dai.CameraBoardSocket.CAM_A)
+    stereo.setOutputSize(640, 400)
+    left_out.link(stereo.left)
+    right_out.link(stereo.right)
 
     # model
     model_description = dai.NNModelDescription(f"yolov6_nano_r2_coco.{platform}.yaml")
